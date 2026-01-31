@@ -8,6 +8,7 @@ The Architecture: "Snow and Metal"
 Traditional logs are easy to index and restrict. The West Warehouse instead "bleeds" data into a stream of randomized system error noise.
 • Metal (Data): Sensitive information is encoded in Base64 and fragmented into 8-character blocks.
 • Snow (Noise): These fragments are bookended by common, non-isomorphic markers like [MEM_ERROR], [SYS_LOG], or [DRIVE_FAIL].
+
 • The Result: To an auditor or a cloud-filter, the Warehouse appears as a corrupted, mundane diagnostic log.
 
 
