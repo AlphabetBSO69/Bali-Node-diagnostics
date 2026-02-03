@@ -1,8 +1,8 @@
 name: Bali-Node-Autopilot-Sync
 on:
   schedule:
-    - cron: '0 */6 * * *' # Runs every 6 hours
-  workflow_dispatch: # Allows you to run it manually
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
 jobs:
   sync-logs:
@@ -21,5 +21,5 @@ jobs:
           git config --global user.name "Bali-Node-Bot"
           git config --global user.email "bot@bali-node.local"
           git add logs.txt
-          git commit -m "Autopilot Sync: [DEEP_WRITE_COMPLETE]" || echo "No changes to commit"
+          git commit -m "Structural Alignment: [SYNC_COMPLETE]" || echo "No changes"
           git push
