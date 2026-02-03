@@ -1,1 +1,25 @@
-m
+name: Bali-Node-Autopilot-Sync
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Runs every 6 hours
+  workflow_dispatch: # Allows you to run it manually
+
+jobs:
+  sync-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Fetch Google Doc Content
+        run: |
+          curl -L "https://docs.google.com/document/d/1-UCenuXhP_z2k5S8YD1HbclHHdRiCyKydH557LcO2vw/export?format=txt" -o incoming_logs.txt
+          
+      - name: Append and Commit
+        run: |
+          cat incoming_logs.txt >> logs.txt
+          git config --global user.name "Bali-Node-Bot"
+          git config --global user.email "bot@bali-node.local"
+          git add logs.txt
+          git commit -m "Autopilot Sync: [DEEP_WRITE_COMPLETE]" || echo "No changes to commit"
+          git push
