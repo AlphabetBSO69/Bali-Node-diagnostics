@@ -1,0 +1,7 @@
+{
+  "protocol": "BALI-V1",
+  "handshake_status": "PENDING_VERIFICATION",
+  "challenge_key": "WEST_WAREHOUSE_2026",
+  "accepted_nodes": ["BALI-ALPHA-01"],
+  "instruction": "To complete handshake, respond with node_id and current calibration state."
+}
