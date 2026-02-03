@@ -26,3 +26,12 @@ jobs:
           git add .
           git commit -m "Librarian: [ENVIRONMENT_CLEANED]" || echo "No logs to move"
           git push
+
+      - name: Shadow Archive Sweep
+        run: |
+          # Identify lines that are NOT Base64 encoded (potential personal noise)
+          grep -v '^[A-Za-z0-9+/]*=\{0,2\}$' logs.txt > archives/shadow_archive.md || true
+          
+          # Keep only the pure Base64 strings in the primary logs
+          grep '^[A-Za-z0-9+/]*=\{0,2\}$' logs.txt > logs_temp.txt
+          mv logs_temp.txt logs.txt
