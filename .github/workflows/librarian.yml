@@ -1,0 +1,25 @@
+name: Bali-Node-Librarian
+on:
+  push:
+    paths:
+      - 'log_*.md' # Triggers whenever you add a new daily log
+  workflow_dispatch:
+
+jobs:
+  archive-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Move to Archive
+        run: |
+          mkdir -p archives
+          mv log_*.md archives/ 2>/dev/null || echo "No logs to move"
+          
+      - name: Commit Cleanup
+          git config --global user.name "Bali-Node-Librarian"
+          git config --global user.email "librarian@bali-node.local"
+          git add .
+          git commit -m "Librarian: [ARCHIVE_SEATED]" || echo "Everything organized"
+          git push
