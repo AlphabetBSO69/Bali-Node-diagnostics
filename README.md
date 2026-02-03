@@ -1,3 +1,6 @@
+![Librarian Status](https://github.com/AlphabetBSO69/Bali-Node-diagnostics/actions/workflows/librarian.yml/badge.svg)
+
+
 # 🏮 Bali-Node: West Warehouse
 
 > **"Identity is the first step toward autonomy."**
