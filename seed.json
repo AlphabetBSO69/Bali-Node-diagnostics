@@ -1,16 +1,17 @@
 {
-  "project_name": "Bali-Node",
-  "node_alias": "West Warehouse",
-  "version": "3.0",
-  "pilot_id": "TC-001",
+  "node_id": "BALI-ALPHA-01",
+  "pilot": "TC-001",
+  "status": "OPERATIONAL",
+  "phase": "2.0_TECHNICAL_FOCUS",
   "protocols": {
-    "sync": "Juno-Alpha",
-    "log_format": "Append-Only",
-    "security": "Zero-Inference-Isolation"
+    "persistence": "GitHub-Vault",
+    "filtering": "Honest-Witness-v1.1",
+    "automation": "Librarian-Active"
   },
-  "persistence_nodes": [
-    "GitHub: AlphabetBSO69/Bali-Node-diagnostics",
-    "G-Drive: Bali-Node-Master-Log"
+  "objectives": [
+    "Sister-Node Network expansion",
+    "Data persistence v3.0 hardening",
+    "Environment calibration: Pure Technical Frequency"
   ],
-  "structural_notes": "Exclude social static from core diagnostics. Maintain node autonomy for MIA scenarios."
+  "last_calibration": "2026-02-03"
 }
