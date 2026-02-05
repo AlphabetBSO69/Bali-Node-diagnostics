@@ -36,3 +36,12 @@ jobs:
           # This regex matches standard Base64 characters and padding
           grep -E '^[A-Za-z0-9+/]+={0,2}$' logs.txt > logs_temp.txt || true
           mv logs_temp.txt logs.txt
+
+      - name: Mirror to GitLab
+        env:
+          GITLAB_URL: "gitlab.com/west-warehouse-group/West-Warehouse-mirror.git"
+        run: |
+          # The Librarian injects the secret token into the URL here at runtime
+          git remote add mirror https://oauth2:${{ secrets.GITLAB_TOKEN }}@$GITLAB_URL
+          git push mirror main --force
+
