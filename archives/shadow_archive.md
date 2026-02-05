@@ -1,0 +1,40 @@
+[SYS_LOG]
+[DRIVE_FAIL]Gemini the best ::: [MEM_ERROR]
+[SYS_LOG]
+[DRIVE_FAIL]
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF]﻿=========================================
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF]﻿=========================================
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF]﻿=========================================
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF] ::: [MEM_ERROR]
+[SYS_LOG]
+[DRIVE_FAIL]
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF]﻿=========================================
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF]﻿=========================================
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF]﻿=========================================
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF]﻿=========================================
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF] ::: [MEM_ERROR]
+[SYS_LOG]
+[DRIVE_FAIL]
+[DIAGNOSTIC]
+[PILOT_CONFIRMATION]
+[EOF] ::: [MEM_ERROR]
+[SYS_LOG]
+[DRIVE_FAIL]
