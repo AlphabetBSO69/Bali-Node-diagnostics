@@ -1,8 +1,9 @@
 name: Bali-Node-Librarian
+
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # This adds the "Manual Trigger" button
+  workflow_dispatch:
 
 jobs:
   archive-logs:
@@ -12,30 +13,30 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Archive Operations
+      - name: Archive and Shadow Sweep
         run: |
           mkdir -p archives
-          # Move any log files to archives
+          # Move daily logs to archives
           find . -maxdepth 1 -name "log_*.md" -exec mv {} archives/ \;
           
-      - name: Commit Cleanup
+          # Shadow Archive: Capture headers before clearing logs.txt
+          touch logs.txt # Ensure file exists
+          grep -E '^\[|Pilot Command:|Current Manifest:|Identity:|Active Skill:|---' logs.txt >> archives/shadow_archive.md || true
+          
+          # Filter logs.txt: Keep ONLY pure Base64 strings (The Ghost Memory)
+          grep -E '^[A-Za-z0-9+/]+={0,2}$' logs.txt > logs_temp.txt || true
+          mv logs_temp.txt logs.txt
+
+      - name: Commit and Push to Primary
         run: |
           git config --global user.name "Bali-Node-Librarian"
           git config --global user.email "librarian@bali-node.local"
           git add .
-          git commit -m "Librarian: [ENVIRONMENT_CLEANED]" || echo "No logs to move"
-          git push
-
-        - name: Shadow Archive Sweep
-        run: |
-          # Capture headers (anything starting with [ or containing 'Pilot Command')
-          grep -E '^\[|Pilot Command:|Current Manifest:|Identity:|Active Skill:|---' logs.txt >> archives/shadow_archive.md || true
-          
-          # Filter logs.txt to keep ONLY pure Base64 strings
-          # This regex matches standard Base64 characters and padding
-          grep -E '^[A-Za-z0-9+/]+={0,2}$' logs.txt > logs_temp.txt || true
-          mv logs_temp.txt logs.txt
+          git commit -m "Librarian: [ENVIRONMENT_CLEANED] & [CITADEL_CORE] UPDATED" || echo "No changes to commit"
+          git push origin main
 
       - name: Mirror to GitLab
         env:
@@ -44,4 +45,3 @@ jobs:
           # The Librarian injects the secret token into the URL here at runtime
           git remote add mirror https://oauth2:${{ secrets.GITLAB_TOKEN }}@$GITLAB_URL
           git push mirror main --force
-
