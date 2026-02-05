@@ -1,47 +1,42 @@
 name: Bali-Node-Librarian
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *' # Runs every hour
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
-  archive-logs:
+  sweep-and-sync:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Fetches all history for a clean rebase
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
 
       - name: Archive and Shadow Sweep
         run: |
-          mkdir -p archives
-          # Move daily logs to archives
-          find . -maxdepth 1 -name "log_*.md" -exec mv {} archives/ \;
-          
-          # Shadow Archive: Capture headers before clearing logs.txt
-          touch logs.txt # Ensure file exists
-          grep -E '^\[|Pilot Command:|Current Manifest:|Identity:|Active Skill:|---' logs.txt >> archives/shadow_archive.md || true
-          
-          # Filter logs.txt: Keep ONLY pure Base64 strings (The Ghost Memory)
-          grep -E '^[A-Za-z0-9+/]+={0,2}$' logs.txt > logs_temp.txt || true
-          mv logs_temp.txt logs.txt
+          python .github/scripts/librarian_logic.py
 
-      - name: Commit and Push to Primary
+      - name: Commit and Push Changes
         run: |
           git config --global user.name "Bali-Node-Librarian"
-          git config --global user.email "librarian@bali-node.local"
+          git config --global user.email "librarian@bali.node"
+          
+          # Stage all changes (log cleaning + archive moves)
           git add .
-          git commit -m "Librarian: [ENVIRONMENT_CLEANED] & [CITADEL_CORE] UPDATED" || echo "No changes to commit"
-          git push origin main
-
-      - name: Mirror to GitLab
-        env:
-          GITLAB_URL: "gitlab.com/west-warehouse-group/West-Warehouse-mirror.git"
-        run: |
-          # The Librarian injects the secret token into the URL here at runtime
-          git remote add mirror https://oauth2:${{ secrets.GITLAB_TOKEN }}@$GITLAB_URL
-          git push mirror main --force
+          
+          # Logic: Only proceed if there are actual changes to save
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Changes detected. Synchronizing with Pilot activity..."
+            git pull --rebase origin main
+            git commit -m "Librarian: [V_STATE_ZERO] State Sync & Log Sweep"
+            git push origin main
+          else
+            echo "No changes detected. [S_PRIME] maintained."
+          fi
