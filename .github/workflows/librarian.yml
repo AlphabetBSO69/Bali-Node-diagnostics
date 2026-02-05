@@ -2,8 +2,8 @@ name: Bali-Node-Librarian
 
 on:
   schedule:
-    - cron: '0 * * * *' # Runs every hour
-  workflow_dispatch: # Allows manual trigger
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   sweep-and-sync:
@@ -12,7 +12,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetches all history for a clean rebase
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -20,23 +20,13 @@ jobs:
           python-version: '3.x'
 
       - name: Archive and Shadow Sweep
-        run: |
-          python .github/scripts/librarian_logic.py
+        run: python .github/scripts/librarian_logic.py
 
-      - name: Commit and Push Changes
+      - name: Commit and Push
         run: |
           git config --global user.name "Bali-Node-Librarian"
           git config --global user.email "librarian@bali.node"
-          
-          # Stage all changes (log cleaning + archive moves)
           git add .
-          
-          # Logic: Only proceed if there are actual changes to save
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Changes detected. Synchronizing with Pilot activity..."
-            git pull --rebase origin main
-            git commit -m "Librarian: [V_STATE_ZERO] State Sync & Log Sweep"
-            git push origin main
-          else
-            echo "No changes detected. [S_PRIME] maintained."
-          fi
+          git pull --rebase origin main
+          git commit -m "Librarian: [V_STATE_ZERO] Sync" || echo "No changes to commit"
+          git push origin main
