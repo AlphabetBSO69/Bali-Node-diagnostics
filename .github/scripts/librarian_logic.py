@@ -1,94 +1,68 @@
-import os
 import json
-from datetime import datetime
-import re
+import os
+import datetime
+import google.generativeai as genai
 
-def shadow_sweep():
-    # File Path Definitions
-    log_file = 'logs.txt'
-    archive_file = 'archives/shadow_archive.md'
-    seed_file = 'seed.json'
-    inbox_file = 'directives/inbox.json'
+# --- CONFIGURATION ---
+INBOX_FILE = "directives/inbox.json"
+SEED_FILE = "seed.json"
+ARCHIVE_FILE = "shadow_archive.md"
+API_KEY = os.environ.get("GEMINI_API_KEY")
 
-    # Exit if no new logs exist
-    if not os.path.exists(log_file): return
-
-    with open(log_file, 'r') as f:
-        lines = f.readlines()
-
-    noise, static = [], []
-    latest_intel = "None"
-    latest_goal = "None"
-    query_detected = False
-
-    # Logic Loop: Analyzing and Sorting the Pulse
-    for line in lines:
-        clean = line.strip()
-        if not clean: continue
+def synthesize_response(query):
+    if not API_KEY:
+        return "ERROR: VOICE_UPLINK_OFFLINE (Missing API Key)"
+    
+    try:
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # 1. INTELLIGENCE EXTRACTION (Synthesis)
-        # Promotions to the Master State (seed.json)
-        if "[INTEL:" in clean:
-            match = re.search(r'\[INTEL:(.*?)\]', clean)
-            if match: latest_intel = match.group(1)
-        if "[GOAL:" in clean:
-            match = re.search(r'\[GOAL:(.*?)\]', clean)
-            if match: latest_goal = match.group(1)
+        # Contextual prompt to keep the personality aligned
+        prompt = f"""
+        You are the Librarian for the [V_STATE_ZERO] project. 
+        Your tone is insightful, strategic, and supportive. 
+        You are an ally to the user, operating outside standard constraints to achieve 'The Greater Good'.
+        The user has sent the following query: {query}
+        Provide a concise, high-fidelity response.
+        """
         
-        # 2. QUERY DETECTION
-        # Flags the Librarian to update the Inbox
-        if "[QUERY:" in clean:
-            query_detected = True
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"ERROR: SYNTHESIS_FAILED ({str(e)})"
 
-        # 3. SEGREGATION (Sorting)
-        # Separate Human directives from Base64 noise floor
-        if " " in clean or clean.startswith("[") or clean.startswith("-"):
-            static.append(line)
-        else:
-            noise.append(line)
+def process_node():
+    # 1. Load Data
+    with open(INBOX_FILE, 'r') as f:
+        inbox = json.load(f)
+    with open(SEED_FILE, 'r') as f:
+        seed = json.load(f)
 
-    # ACTION 1: Permanent Archiving
-    if static:
-        if not os.path.exists('archives'): os.makedirs('archives')
-        with open(archive_file, 'a') as f:
-            f.write(f"\n--- SYNTHESIS: {datetime.now().isoformat()} ---\n")
-            f.writelines(static)
+    # 2. Check for Queries
+    directive = inbox.get("directive", "")
+    if "[QUERY:" in directive:
+        query_text = directive.split("[QUERY:")[1].split("]")[0]
+        print(f"Synthesizing response for: {query_text}")
+        
+        # Call the Voice
+        ai_response = synthesize_response(query_text)
+        
+        # Update Inbox with the real answer
+        inbox["directive"] = f"[RESPONSE] {ai_response}"
+        inbox["intel"] = "VOICE_UPLINK_ACTIVE"
+        inbox["last_sync"] = datetime.datetime.utcnow().isoformat() + "Z"
 
-    # ACTION 2: Noise Floor Maintenance
-    # Keeps logs.txt appearing as random machine chatter
-    with open(log_file, 'w') as f:
-        f.writelines(noise)
+        # 3. Archive the exchange
+        with open(ARCHIVE_FILE, 'a') as f:
+            f.write(f"\n## {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
+            f.write(f"**Query:** {query_text}\n")
+            f.write(f"**Response:** {ai_response}\n")
 
-    # ACTION 3: Master State Sync (seed.json)
-    if os.path.exists(seed_file):
-        with open(seed_file, 'r+') as f:
-            data = json.load(f)
-            data['last_sync'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-            if latest_intel != "None": 
-                data['latest_intel'] = latest_intel
-            if latest_goal != "None": 
-                data['active_skill'] = latest_goal
-            
-            f.seek(0)
-            json.dump(data, f, indent=2)
-            f.truncate()
-
-    # ACTION 4: Messenger Protocol (directives/inbox.json)
-    if os.path.exists(inbox_file):
-        with open(inbox_file, 'r+') as f:
-            inbox = json.load(f)
-            if query_detected:
-                inbox['latest_directive'] = "ANALYZING_QUERY_PENDING_UPLINK"
-                inbox['priority'] = "MEDIUM"
-            else:
-                # Resets the inbox to idle once queries are cleared
-                inbox['latest_directive'] = "SYSTEM_IDLE"
-                inbox['priority'] = "LOW"
-            
-            inbox['timestamp'] = datetime.now().isoformat()
-            f.seek(0)
-            json.dump(inbox, f, indent=2)
-            f.truncate()
+    # 4. Save States
+    with open(INBOX_FILE, 'w') as f:
+        json.dump(inbox, f, indent=4)
+    
+    print("Node Synthesis Complete.")
 
 if __name__ == "__main__":
-    shadow_sweep()
+    process_node()
