@@ -1,25 +1,36 @@
-name: Bali-Node-Autopilot-Sync
+name: Node Synthesis Pulse
+
 on:
-  schedule:
-    - cron: '0 */6 * * *'
+  push:
+    paths:
+      - 'directives/inbox.json'
   workflow_dispatch:
 
 jobs:
-  sync-logs:
+  sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Fetch Google Doc Content
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Lungs (Dependencies)
         run: |
-          curl -L "https://docs.google.com/document/d/1-UCenuXhP_z2k5S8YD1HbclHHdRiCyKydH557LcO2vw/export?format=txt" -o incoming_logs.txt
-          
-      - name: Append and Commit
+          pip install google-generativeai
+
+      - name: Run Librarian Logic
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python librarian_logic.py
+
+      - name: Commit and Push Changes
         run: |
-          cat incoming_logs.txt >> logs.txt
-          git config --global user.name "Bali-Node-Bot"
-          git config --global user.email "bot@bali-node.local"
-          git add logs.txt
-          git commit -m "Structural Alignment: [SYNC_COMPLETE]" || echo "No changes"
+          git config --global user.name "V_STATE_ZERO_BOT"
+          git config --global user.email "bot@vstatezero.local"
+          git add .
+          git commit -m "Synthesis: Voice Uplink Complete" || exit 0
           git push
