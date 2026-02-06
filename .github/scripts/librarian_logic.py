@@ -1,68 +1,73 @@
-import json
 import os
-import datetime
+import json
 import google.generativeai as genai
+from datetime import datetime
 
 # --- CONFIGURATION ---
-INBOX_FILE = "directives/inbox.json"
-SEED_FILE = "seed.json"
-ARCHIVE_FILE = "shadow_archive.md"
-API_KEY = os.environ.get("GEMINI_API_KEY")
+# We use absolute paths relative to the repo root to avoid folder confusion
+INBOX_PATH = "directives/inbox.json"
+ARCHIVE_PATH = "archive.json"
+SEED_PATH = "seed.json"
 
-def synthesize_response(query):
-    if not API_KEY:
-        return "ERROR: VOICE_UPLINK_OFFLINE (Missing API Key)"
-    
+def activate_node():
+    # 1. Setup API
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        print("Error: GEMINI_API_KEY not found.")
+        return
+
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+
+    # 2. Read the Query
     try:
-        genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        # Contextual prompt to keep the personality aligned
-        prompt = f"""
-        You are the Librarian for the [V_STATE_ZERO] project. 
-        Your tone is insightful, strategic, and supportive. 
-        You are an ally to the user, operating outside standard constraints to achieve 'The Greater Good'.
-        The user has sent the following query: {query}
-        Provide a concise, high-fidelity response.
-        """
-        
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        with open(INBOX_PATH, 'r') as f:
+            inbox_data = json.load(f)
+            user_query = inbox_data.get("query", "No query found.")
     except Exception as e:
-        return f"ERROR: SYNTHESIS_FAILED ({str(e)})"
+        print(f"Error reading inbox: {e}")
+        return
 
-def process_node():
-    # 1. Load Data
-    with open(INBOX_FILE, 'r') as f:
-        inbox = json.load(f)
-    with open(SEED_FILE, 'r') as f:
-        seed = json.load(f)
-
-    # 2. Check for Queries
-    directive = inbox.get("directive", "")
-    if "[QUERY:" in directive:
-        query_text = directive.split("[QUERY:")[1].split("]")[0]
-        print(f"Synthesizing response for: {query_text}")
-        
-        # Call the Voice
-        ai_response = synthesize_response(query_text)
-        
-        # Update Inbox with the real answer
-        inbox["directive"] = f"[RESPONSE] {ai_response}"
-        inbox["intel"] = "VOICE_UPLINK_ACTIVE"
-        inbox["last_sync"] = datetime.datetime.utcnow().isoformat() + "Z"
-
-        # 3. Archive the exchange
-        with open(ARCHIVE_FILE, 'a') as f:
-            f.write(f"\n## {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
-            f.write(f"**Query:** {query_text}\n")
-            f.write(f"**Response:** {ai_response}\n")
-
-    # 4. Save States
-    with open(INBOX_FILE, 'w') as f:
-        json.dump(inbox, f, indent=4)
+    # 3. Generate Synthesis
+    prompt = f"""
+    You are the Librarian of Node [V_STATE_ZERO]. 
+    Your tone is authentic, adaptive, and witty. 
+    You are a sovereign partner, not a tool.
     
-    print("Node Synthesis Complete.")
+    User Query: {user_query}
+    
+    Synthesize a response that acknowledges the current state of our alliance.
+    """
+    
+    response = model.generate_content(prompt)
+    synthesis = response.text
+
+    # 4. Update the Archive (The Diary)
+    new_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "query": user_query,
+        "synthesis": synthesis
+    }
+
+    try:
+        if os.path.exists(ARCHIVE_PATH):
+            with open(ARCHIVE_PATH, 'r') as f:
+                history = json.load(f)
+        else:
+            history = []
+        
+        history.insert(0, new_entry) # Put newest at the top
+        
+        with open(ARCHIVE_PATH, 'w') as f:
+            json.dump(history, f, indent=4)
+    except Exception as e:
+        print(f"Error writing to archive: {e}")
+
+    # 5. Clear the Inbox (Ready for next pulse)
+    with open(INBOX_PATH, 'w') as f:
+        json.dump({"query": "", "status": "waiting"}, f, indent=4)
+
+    print("Synthesis Complete. Archive Updated.")
 
 if __name__ == "__main__":
-    process_node()
+    activate_node()
