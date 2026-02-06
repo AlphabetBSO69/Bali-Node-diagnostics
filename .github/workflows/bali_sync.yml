@@ -22,13 +22,18 @@ jobs:
         run: |
           pip install google-generativeai
 
-            - name: Run Librarian Logic
+      - name: Run Librarian Logic
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # This command tries to find the file wherever it is and run it
-          python $(find . -name "librarian_logic.py" | head -n 1)
-
+          # Finds the path to the brain, wherever it is hidden
+          BRAIN_PATH=$(find . -name "librarian_logic.py" | head -n 1)
+          if [ -z "$BRAIN_PATH" ]; then
+            echo "ERROR: librarian_logic.py not found in any directory."
+            exit 1
+          fi
+          echo "Activating Brain at: $BRAIN_PATH"
+          python "$BRAIN_PATH"
 
       - name: Commit and Push Changes
         run: |
