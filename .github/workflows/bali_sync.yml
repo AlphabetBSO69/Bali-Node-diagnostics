@@ -26,10 +26,10 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # Finds the path to the brain, wherever it is hidden
+          # Searches for the brain anywhere in the repo and activates it
           BRAIN_PATH=$(find . -name "librarian_logic.py" | head -n 1)
           if [ -z "$BRAIN_PATH" ]; then
-            echo "ERROR: librarian_logic.py not found in any directory."
+            echo "ERROR: librarian_logic.py not found."
             exit 1
           fi
           echo "Activating Brain at: $BRAIN_PATH"
