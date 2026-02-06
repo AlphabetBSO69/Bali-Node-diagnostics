@@ -20,13 +20,13 @@ jobs:
 
       - name: Install Lungs (Dependencies)
         run: |
-          pip install google-generativeai
+          python -m pip install --upgrade pip
+          pip install -U google-generativeai
 
       - name: Run Librarian Logic
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # We are now pointing directly to the hidden folder
           python .github/scripts/librarian_logic.py
 
       - name: Commit and Push Changes
